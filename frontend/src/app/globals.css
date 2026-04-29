@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@400;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-warm: #FFF5E4;
+  --bg-house: #FFCF86;
+  --blue-primary: #4A90E2;
+  --blue-dark: #2C6FC7;
+  --font-display: 'Baloo 2', cursive;
+  --font-body: 'Nunito', sans-serif;
+}
+
+* {
+  font-family: var(--font-body);
+}
+
+body {
+  background-color: var(--bg-warm);
+  color: #2d2d2d;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+}
+
+.btn-primary {
+  @apply bg-blue-500 hover:bg-blue-600 text-white font-bold px-5 py-2 rounded-full transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0;
+}
+
+.btn-secondary {
+  @apply bg-white hover:bg-blue-50 text-blue-500 font-bold px-5 py-2 rounded-full border-2 border-blue-200 transition-all duration-200;
+}
+
+.card {
+  @apply bg-white rounded-2xl shadow-md;
+}
+
+/* Character bounce animation */
+@keyframes charBounce {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.char-bounce {
+  animation: charBounce 2s ease-in-out infinite;
+}
+
+/* Fade in */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* Popover */
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.pop-in {
+  animation: popIn 0.2s ease-out forwards;
+}
+
+/* Heart pulse */
+@keyframes heartPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.heart-pulse {
+  animation: heartPulse 0.6s ease-in-out;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1c4b0; border-radius: 3px; }
