@@ -1,12 +1,11 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import { useStore } from '@/store'
 import { sendChat } from '@/lib/api'
 import { ChatMessage } from '@/types'
 
-interface Props {
-  onClose: () => void
-}
+interface Props { onClose: () => void }
 
 export default function ChatPanel({ onClose }: Props) {
   const { selectedMates, currentSession, chatMessages, addChatMessage } = useStore()
@@ -23,13 +22,7 @@ export default function ChatPanel({ onClose }: Props) {
     if (!input.trim() || loading) return
     const question = input.trim()
     setInput('')
-
-    addChatMessage({
-      role: 'user',
-      content: question,
-      timestamp: new Date()
-    })
-
+    addChatMessage({ role: 'user', content: question, timestamp: new Date() })
     setLoading(true)
     try {
       const res = await sendChat({
@@ -37,7 +30,6 @@ export default function ChatPanel({ onClose }: Props) {
         character_ids: selectedMates.map(m => m.id),
         session_id: currentSession?.session_id
       })
-
       for (const r of (res.responses || [])) {
         const char = selectedMates.find(m => m.name === r.name)
         addChatMessage({
@@ -63,14 +55,14 @@ export default function ChatPanel({ onClose }: Props) {
     <div className="absolute inset-0 flex flex-col bg-white/95 backdrop-blur-sm z-30 rounded-lg">
       {/* Header */}
       <div className="bg-blue-500 text-white px-4 py-3 flex items-center gap-3 rounded-t-lg">
-        <button onClick={onClose} className="text-white/80 hover:text-white">
-          ←
-        </button>
+        <button onClick={onClose} className="text-white/80 hover:text-white text-lg">←</button>
+        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-white/30">
+          {activeChar && <Image src={activeChar.avatar} alt={activeChar.name} width={32} height={32} className="object-cover" />}
+        </div>
         <div>
           <p className="font-bold text-sm">{activeChar?.name || '스터디 챗'}</p>
           <p className="text-xs text-blue-100 flex items-center gap-1">
-            <span className="w-2 h-2 bg-green-300 rounded-full inline-block"/>
-            AI Bot
+            <span className="w-2 h-2 bg-green-300 rounded-full inline-block"/>AI Bot
           </p>
         </div>
         {/* Char selector */}
@@ -79,11 +71,9 @@ export default function ChatPanel({ onClose }: Props) {
             <button
               key={m.id}
               onClick={() => setActiveChar(m)}
-              className={`text-lg rounded-full p-0.5 transition ${
-                activeChar?.id === m.id ? 'bg-blue-300' : 'hover:bg-blue-400'
-              }`}
+              className={`w-7 h-7 rounded-full overflow-hidden border-2 transition ${activeChar?.id === m.id ? 'border-white' : 'border-transparent hover:border-white/50'}`}
             >
-              {m.avatar}
+              <Image src={m.avatar} alt={m.name} width={28} height={28} className="object-cover" />
             </button>
           ))}
         </div>
@@ -98,13 +88,15 @@ export default function ChatPanel({ onClose }: Props) {
           </div>
         )}
         {chatMessages.map((msg, i) => (
-          <MessageBubble key={i} msg={msg} />
+          <MessageBubble key={i} msg={msg} mates={selectedMates} />
         ))}
         {loading && (
           <div className="flex items-center gap-2 text-gray-400">
-            <span className="text-xl">
-              {activeChar?.avatar || '🤔'}
-            </span>
+            {activeChar && (
+              <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0">
+                <Image src={activeChar.avatar} alt={activeChar.name} width={28} height={28} className="object-cover" />
+              </div>
+            )}
             <div className="bg-gray-100 rounded-2xl px-4 py-2 text-sm">
               <span className="animate-pulse">생각 중...</span>
             </div>
@@ -127,15 +119,13 @@ export default function ChatPanel({ onClose }: Props) {
           onClick={handleSend}
           disabled={loading || !input.trim()}
           className="w-9 h-9 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 disabled:opacity-40 transition-colors text-sm"
-        >
-          ➤
-        </button>
+        >➤</button>
       </div>
     </div>
   )
 }
 
-function MessageBubble({ msg }: { msg: ChatMessage }) {
+function MessageBubble({ msg, mates }: { msg: ChatMessage; mates: any[] }) {
   if (msg.role === 'user') {
     return (
       <div className="flex justify-end">
@@ -145,13 +135,16 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
       </div>
     )
   }
-
+  const char = mates.find(m => m.name === msg.character_name)
   return (
     <div className="flex items-start gap-2">
+      {char && (
+        <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mt-0.5">
+          <Image src={char.avatar} alt={char.name} width={28} height={28} className="object-cover" />
+        </div>
+      )}
       <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 text-sm max-w-[80%]">
-        {msg.character_name && (
-          <p className="font-bold text-gray-600 text-xs mb-1">{msg.character_name}</p>
-        )}
+        {msg.character_name && <p className="font-bold text-gray-500 text-xs mb-1">{msg.character_name}</p>}
         <p className="text-gray-700 whitespace-pre-wrap">{msg.content}</p>
       </div>
     </div>

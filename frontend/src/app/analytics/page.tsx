@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, Suspense } from 'react'
+import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import { useStore } from '@/store'
@@ -147,7 +148,7 @@ function AnalyticsContent() {
                 className="flex items-center gap-3 rounded-2xl px-4 py-4"
                 style={{ backgroundColor: STATUS_COLORS[i % STATUS_COLORS.length] }}
               >
-                <span className="text-3xl flex-shrink-0">{mate.avatar}</span>
+                <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-white shadow-sm"><Image src={mate.avatar} alt={mate.name} width={48} height={48} className="object-cover w-full h-full" /></div>
                 <p className="text-sm font-semibold text-gray-700">
                   {STATUS_MESSAGES[i % STATUS_MESSAGES.length]}
                 </p>

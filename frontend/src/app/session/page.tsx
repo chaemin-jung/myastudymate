@@ -1,32 +1,25 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useStore } from '@/store'
 import { endSession, getFocusReminder } from '@/lib/api'
 import ChatPanel from '@/components/ChatPanel'
 
-const INACTIVITY_THRESHOLD = 30_000 // 30 seconds
+const INACTIVITY_THRESHOLD = 30_000
 
 export default function SessionPage() {
   const router = useRouter()
-  const {
-    selectedMates,
-    currentSession,
-    distractionCount,
-    incrementDistraction,
-    resetDistraction,
-    setFocusDuration,
-    clearChat,
-  } = useStore()
+  const { selectedMates, currentSession, distractionCount, incrementDistraction,
+          resetDistraction, setFocusDuration, clearChat } = useStore()
 
   const [showChat, setShowChat] = useState(false)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const [reminderMsg, setReminderMsg] = useState<{ text: string; char: string } | null>(null)
+  const [reminderMsg, setReminderMsg] = useState<{ text: string; charName: string; avatar: string } | null>(null)
   const inactivityTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const startTime = useRef(Date.now())
 
-  // Timer
   useEffect(() => {
     const interval = setInterval(() => setElapsed(s => s + 1), 1000)
     return () => clearInterval(interval)
@@ -38,19 +31,18 @@ export default function SessionPage() {
     return `${m}:${sec}`
   }
 
-  // Focus / inactivity detection
   const resetInactivity = useCallback(() => {
     if (inactivityTimer.current) clearTimeout(inactivityTimer.current)
     inactivityTimer.current = setTimeout(async () => {
       if (selectedMates.length === 0) return
-      const randomMate = selectedMates[Math.floor(Math.random() * selectedMates.length)]
+      const mate = selectedMates[Math.floor(Math.random() * selectedMates.length)]
       incrementDistraction()
       try {
-        const res = await getFocusReminder(randomMate.id)
-        setReminderMsg({ text: res.message, char: randomMate.avatar })
+        const res = await getFocusReminder(mate.id)
+        setReminderMsg({ text: res.message, charName: mate.name, avatar: mate.avatar })
         setTimeout(() => setReminderMsg(null), 4000)
       } catch {
-        setReminderMsg({ text: '집중해!', char: randomMate.avatar })
+        setReminderMsg({ text: '집중해!', charName: mate.name, avatar: mate.avatar })
         setTimeout(() => setReminderMsg(null), 3000)
       }
     }, INACTIVITY_THRESHOLD)
@@ -71,26 +63,16 @@ export default function SessionPage() {
     setFocusDuration(focusDuration)
     if (currentSession) {
       try {
-        await endSession({
-          session_id: currentSession.session_id,
-          distraction_count: distractionCount,
-          focus_duration: focusDuration,
-        })
+        await endSession({ session_id: currentSession.session_id, distraction_count: distractionCount, focus_duration: focusDuration })
       } catch {}
     }
     resetDistraction()
     router.push(`/analytics?session_id=${currentSession?.session_id || 0}`)
   }
 
-  // Fake video tiles
-  const videoTiles = selectedMates.slice(0, 4)
+  // Fill up to 4 tiles
+  const videoTiles = [...selectedMates]
   while (videoTiles.length < 4) videoTiles.push(null as any)
-
-  const gridClass = selectedMates.length <= 1
-    ? 'grid-cols-1'
-    : selectedMates.length <= 2
-    ? 'grid-cols-2'
-    : 'grid-cols-2'
 
   return (
     <div className="h-screen bg-gray-900 flex flex-col overflow-hidden">
@@ -99,12 +81,7 @@ export default function SessionPage() {
         <span className="font-mono font-bold text-lg">{formatTime(elapsed)}</span>
         <div className="flex items-center gap-6">
           <ControlBtn icon="🎥" label="camera" />
-          <ControlBtn
-            icon="💬"
-            label="chat"
-            active={showChat}
-            onClick={() => setShowChat(!showChat)}
-          />
+          <ControlBtn icon="💬" label="chat" active={showChat} onClick={() => setShowChat(!showChat)} />
           <ControlBtn icon="🎤" label="mic" />
         </div>
         <button
@@ -115,25 +92,25 @@ export default function SessionPage() {
         </button>
       </div>
 
-      {/* Video grid */}
-      <div className={`flex-1 grid ${gridClass} gap-1 p-1 relative overflow-hidden`}>
+      {/* 2x2 video grid */}
+      <div className="flex-1 grid grid-cols-2 gap-1 p-1 relative overflow-hidden">
         {videoTiles.map((mate, i) => (
-          <VideoTile key={i} mate={mate} reminderMsg={reminderMsg} isFirst={i === 0} />
+          <VideoTile key={i} mate={mate} reminderMsg={i === 0 ? reminderMsg : null} />
         ))}
 
-        {/* Chat overlay */}
         {showChat && (
           <div className="absolute right-0 top-0 h-full w-80 shadow-2xl">
             <ChatPanel onClose={() => setShowChat(false)} />
           </div>
         )}
 
-        {/* Reminder toast */}
+        {/* Global reminder toast */}
         {reminderMsg && (
-          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-3 shadow-xl pop-in max-w-xs">
-            <p className="text-gray-800 font-semibold text-sm">
-              {reminderMsg.char} {reminderMsg.text}
-            </p>
+          <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm rounded-2xl px-4 py-3 shadow-xl pop-in flex items-center gap-3 max-w-xs z-20">
+            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+              <Image src={reminderMsg.avatar} alt={reminderMsg.charName} width={40} height={40} className="object-cover" />
+            </div>
+            <p className="text-gray-800 font-semibold text-sm">{reminderMsg.text}</p>
           </div>
         )}
       </div>
@@ -146,18 +123,8 @@ export default function SessionPage() {
               Do you want to leave<br />the study session?
             </h2>
             <div className="flex gap-3 mt-6">
-              <button
-                onClick={handleLeave}
-                className="flex-1 btn-primary py-3"
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => setShowLeaveConfirm(false)}
-                className="flex-1 btn-secondary py-3"
-              >
-                No
-              </button>
+              <button onClick={handleLeave} className="flex-1 btn-primary py-3">Yes</button>
+              <button onClick={() => setShowLeaveConfirm(false)} className="flex-1 btn-secondary py-3">No</button>
             </div>
           </div>
         </div>
@@ -166,42 +133,20 @@ export default function SessionPage() {
   )
 }
 
-function ControlBtn({
-  icon,
-  label,
-  active,
-  onClick
-}: {
-  icon: string
-  label: string
-  active?: boolean
-  onClick?: () => void
+function ControlBtn({ icon, label, active, onClick }: {
+  icon: string; label: string; active?: boolean; onClick?: () => void
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={`flex flex-col items-center gap-1 transition-colors ${
-        active ? 'text-teal-400' : 'text-gray-400 hover:text-white'
-      }`}
-    >
+    <button onClick={onClick} className={`flex flex-col items-center gap-1 transition-colors ${active ? 'text-teal-400' : 'text-gray-400 hover:text-white'}`}>
       <span className="text-xl">{icon}</span>
       <span className="text-xs">{label}</span>
     </button>
   )
 }
 
-function VideoTile({
-  mate,
-  reminderMsg,
-  isFirst
-}: {
-  mate: any
-  reminderMsg: any
-  isFirst: boolean
-}) {
-  const TILE_COLORS = ['#1a1a2e', '#16213e', '#0f3460', '#1b1b2f']
-  const idx = mate ? 0 : 1
+const TILE_BG = ['#1a1a2e','#16213e','#0f3460','#1b1b2f']
 
+function VideoTile({ mate, reminderMsg }: { mate: any; reminderMsg: any }) {
   if (!mate) {
     return (
       <div className="bg-gray-800 flex items-center justify-center rounded-sm">
@@ -209,30 +154,35 @@ function VideoTile({
       </div>
     )
   }
-
   return (
     <div
       className="relative flex items-center justify-center overflow-hidden rounded-sm"
-      style={{ background: `linear-gradient(135deg, ${TILE_COLORS[idx % 4]}, #2d2d44)` }}
+      style={{ background: `linear-gradient(135deg, ${TILE_BG[0]}, #2d2d44)` }}
     >
-      {/* Fake video - big emoji face */}
-      <div className="text-8xl select-none" style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }}>
-        {mate.avatar}
+      {/* Large character face */}
+      <div className="w-48 h-48 rounded-full overflow-hidden shadow-2xl border-4 border-white/10">
+        <Image
+          src={mate.avatar}
+          alt={mate.name}
+          width={192}
+          height={192}
+          className="w-full h-full object-cover"
+        />
       </div>
 
       {/* Name tag */}
-      <div className="absolute bottom-3 left-3 bg-black/50 text-white text-xs px-2 py-1 rounded-lg">
+      <div className="absolute bottom-3 left-3 bg-black/50 text-white text-xs px-2 py-1 rounded-lg font-semibold">
         {mate.name}
       </div>
 
-      {/* Affection indicator */}
-      <div className="absolute top-3 right-3 text-xs text-white/60">
-        {'♥'.repeat(Math.round(mate.affection / 20))}
+      {/* Affection */}
+      <div className="absolute top-3 right-3 text-xs text-red-300">
+        {'♥'.repeat(Math.max(1, Math.round(mate.affection / 20)))}
       </div>
 
-      {/* Reminder speech bubble on first tile */}
-      {isFirst && reminderMsg && (
-        <div className="absolute top-4 left-4 bg-white/90 text-gray-800 text-sm font-semibold rounded-2xl px-3 py-2 max-w-[160px] pop-in">
+      {/* Speech bubble when reminder fires */}
+      {reminderMsg && (
+        <div className="absolute top-4 left-4 bg-white/95 text-gray-800 text-sm font-semibold rounded-2xl px-3 py-2 max-w-[180px] pop-in shadow-lg">
           {reminderMsg.text}
         </div>
       )}
