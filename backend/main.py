@@ -66,15 +66,15 @@ def init_db():
 
     # Seed characters
     characters = [
-        ("mongsil", "몽실이", "soft", 80, "영어", "🐄"),
-        ("kkatal", "까탈이", "strict", 45, "수학", "🐟"),
-        ("bori", "보리", "friend", 60, "역사", "🐼"),
-        ("iru", "이루", "soft", 30, "미적분", "🐊"),
-        ("dotori", "도토리", "strict", 55, "통계", "🦫"),
-        ("kuku", "쿠쿠", "friend", 70, "사회과학", "🐤"),
-        ("harin", "하린", "soft", 65, "물리", "🐬"),
-        ("solbi", "솔비", "friend", 50, "화학", "🐧"),
-        ("jjigu", "찌구", "strict", 40, "생명과학", "🐸"),
+        ("dog",   "보리",   "friend", 60, "역사",   "/characters/dog.png"),
+        ("cat",   "까탈이", "strict", 45, "수학",   "/characters/cat.png"),
+        ("deer",  "몽실이", "soft",   80, "영어",   "/characters/deer.png"),
+        ("dino",  "도토리", "strict", 55, "통계",   "/characters/dino.png"),
+        ("bear",  "이루",   "strict", 30, "미적분", "/characters/bear.png"),
+        ("bunny", "솔비",   "soft",   50, "화학",   "/characters/bunny.png"),
+        ("pig",   "찌구",   "friend", 40, "생명과학","/characters/pig.png"),
+        ("duck",  "하린",   "soft",   65, "물리",   "/characters/duck.png"),
+        ("sheep", "쿠쿠",   "friend", 70, "사회과학","/characters/sheep.png"),
     ]
     c.executemany(
         "INSERT OR IGNORE INTO characters VALUES (?,?,?,?,?,?)",
