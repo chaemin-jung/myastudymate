@@ -1,0 +1,7 @@
+{
+  "/create-session/page": "app/create-session/page.js",
+  "/mates/page": "app/mates/page.js",
+  "/page": "app/page.js",
+  "/session/page": "app/session/page.js",
+  "/analytics/page": "app/analytics/page.js"
+}
